@@ -17,6 +17,8 @@ import { createCreateFolderTool } from "./tools/create-folder";
 import { createRenameFileTool } from "./tools/rename-file";
 import { createDeleteFilesTool } from "./tools/delete-files";
 import { createScrapeUrlsTool } from "./tools/scrape-urls";
+import { generateText } from "ai";
+import { anthropic as aiSdkAnthropic } from "@ai-sdk/anthropic";
 
 interface MessageEvent {
   messageId: Id<"messages">;
@@ -111,37 +113,48 @@ export const processMessage = inngest.createFunction(
       conversation.title === DEFAULT_CONVERSATION_TITLE;
 
     if (shouldGenerateTitle) {
-      const titleAgent = createAgent({
-        name: "title-generator",
-        system: TITLE_GENERATOR_SYSTEM_PROMPT,
-        model: anthropic({
-          model: "claude-3-5-haiku-20241022",
-          defaultParameters: { temperature: 0, max_tokens: 50 },
-        }),
-      });
-      const { output } = await titleAgent.run(message, { step });
+      const title = await step.run("generate-title", async () => {
+        try {
+          console.log("[generate-title] Starting title generation...");
+          console.log(
+            "[generate-title] ANTHROPIC_API_KEY exists:",
+            !!process.env.ANTHROPIC_API_KEY,
+          );
+          console.log(
+            "[generate-title] Using model: claude-3-5-haiku-20241022",
+          );
 
-      const textMessage = output.find(
-        (m) => m.type === "text" && m.role === "assistant",
-      );
-      if (textMessage?.type === "text") {
-        const title =
-          typeof textMessage.content === "string"
-            ? textMessage.content.trim()
-            : textMessage.content
-                .map((c) => c.text)
-                .join("")
-                .trim();
-
-        if (title) {
-          await step.run("update-conversation-title", async () => {
-            await convex.mutation(api.system.updateConversationTitle, {
-              internalKey,
-              conversationId,
-              title,
-            });
+          const { text } = await generateText({
+            model: aiSdkAnthropic("claude-haiku-4-5-20251001"),
+            system: TITLE_GENERATOR_SYSTEM_PROMPT,
+            prompt: message,
           });
+
+          console.log("[generate-title] Success! Title:", text.trim());
+          return text.trim();
+        } catch (error) {
+          console.error("[generate-title] FAILED:", error);
+          console.error(
+            "[generate-title] Error message:",
+            (error as Error).message,
+          );
+          console.error(
+            "[generate-title] Error details:",
+            JSON.stringify(error, null, 2),
+          );
+          // Return empty string instead of throwing so it doesn't retry
+          return "";
         }
+      });
+
+      if (title) {
+        await step.run("update-conversation-title", async () => {
+          await convex.mutation(api.system.updateConversationTitle, {
+            internalKey,
+            conversationId,
+            title,
+          });
+        });
       }
     }
 
@@ -152,7 +165,7 @@ export const processMessage = inngest.createFunction(
       description: "An expert AI coding assistant",
       system: systemPrompt,
       model: anthropic({
-        model: "claude-opus-4-20250514",
+        model: "claude-sonnet-4-5-20250929",
         defaultParameters: { temperature: 0.3, max_tokens: 16000 },
       }),
       tools: [
