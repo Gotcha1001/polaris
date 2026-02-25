@@ -8,6 +8,7 @@ import { Allotment } from "allotment";
 import { FileExplorer } from "./file-explorer";
 import { EditorView } from "../../editor/components/editor-view";
 import { PreviewView } from "./preview-view";
+import { ExportPopover } from "../../preview/components/export-popover";
 
 const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 800;
@@ -28,7 +29,7 @@ const Tab = ({
       onClick={onClick}
       className={cn(
         "flex items-center gap-2 h-full px-3 cursor-pointer text-muted-foreground border-r hover:bg-accent/30",
-        isActive && "bg-background text-foreground"
+        isActive && "bg-background text-foreground",
       )}
     >
       <span className="text-sm">{label}</span>
@@ -53,17 +54,14 @@ export const ProjectIdView = ({ projectId }: { projectId: Id<"projects"> }) => {
           onClick={() => setActiveView("preview")}
         />
         <div className="flex-1 flex justify-end h-full">
-          <div className="flex items-center gap-1.5 h-full px-3 cursor-pointer text-muted-foreground border-l hover:bg-accent/30">
-            <FaGithub className="size-3.5" />
-            <span className="text-sm">Export</span>
-          </div>
+          <ExportPopover projectId={projectId} />
         </div>
       </nav>
       <div className="flex-1 relative">
         <div
           className={cn(
             "absolute inset-0",
-            activeView === "editor" ? "visible" : "invisible"
+            activeView === "editor" ? "visible" : "invisible",
           )}
         >
           <Allotment defaultSizes={[DEFAULT_SIDEBAR_WIDTH, DEFAULT_MAIN_SIZE]}>
@@ -83,10 +81,10 @@ export const ProjectIdView = ({ projectId }: { projectId: Id<"projects"> }) => {
         <div
           className={cn(
             "absolute inset-0",
-            activeView === "preview" ? "visible" : "invisible"
+            activeView === "preview" ? "visible" : "invisible",
           )}
         >
-          <PreviewView projectId={projectId}/>
+          <PreviewView projectId={projectId} />
         </div>
       </div>
     </div>

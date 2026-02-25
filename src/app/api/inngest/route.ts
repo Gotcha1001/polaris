@@ -2,14 +2,16 @@ import { serve } from "inngest/next";
 import { inngest } from "@/inngest/client";
 import { demoError, demoGenerate } from "@/inngest/functions";
 import { processMessage } from "@/app/features/conversations/inngest/process-message";
+import { importGithubRepo } from "@/app/features/projects/inngest/import-github-repo";
+import { exportToGithub } from "@/app/features/projects/inngest/export-to-github";
 
 // Create an API that serves zero functions
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
     /* your functions will be passed here later! */
-    demoGenerate,
-    demoError,
     processMessage,
+    importGithubRepo,
+    exportToGithub,
   ],
 });
