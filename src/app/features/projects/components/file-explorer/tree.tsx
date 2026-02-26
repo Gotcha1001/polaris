@@ -17,6 +17,7 @@ import {
 import { TreeItemWrapper } from "./tree-item-wrapper";
 import { RenameInput } from "./rename-input";
 import { useEditor } from "@/app/features/editor/store/hooks/use-editor";
+import { m } from "framer-motion";
 
 export const Tree = ({
   item,
@@ -31,8 +32,14 @@ export const Tree = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [creating, setCreating] = useState<"file" | "folder" | null>(null);
 
-  const renameFile = useRenameFile();
-  const deleteFile = useDeleteFile();
+  const renameFile = useRenameFile({
+    projectId,
+    parentId: item.parentId,
+  });
+  const deleteFile = useDeleteFile({
+    projectId,
+    parentId: item.parentId,
+  });
   const createFile = useCreateFile();
   const createFolder = useCreateFolder();
 
@@ -120,7 +127,7 @@ export const Tree = ({
         <ChevronRightIcon
           className={cn(
             "size-4 shrink-0 text-muted-foreground",
-            isOpen && "rotate-90"
+            isOpen && "rotate-90",
           )}
         />
         <FolderIcon folderName={folderName} className="size-4" />
